@@ -50,7 +50,6 @@ from PIL import Image, ImageDraw
 
 from openadapt import adapters, common, models, strategies, utils, vision
 
-
 DEBUG = False
 DEBUG_REPLAY = False
 
