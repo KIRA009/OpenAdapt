@@ -10,7 +10,8 @@ import mss.base
 import numpy as np
 import sqlalchemy as sa
 
-from openadapt import config, window
+from openadapt import window
+from openadapt.config import config
 from openadapt.db import db
 
 
