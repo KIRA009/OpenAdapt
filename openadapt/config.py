@@ -38,6 +38,18 @@ STOP_STRS = [
 # containing special chars, separated by keys
 SPECIAL_CHAR_STOP_SEQUENCES = [["ctrl", "ctrl", "ctrl"]]
 
+SCRUB_KEYS_HTML: list[str] = [
+    "text",
+    "canonical_text",
+    "title",
+    "state",
+    "task_description",
+    "key_char",
+    "canonical_key_char",
+    "key_vk",
+    "children",
+]
+
 if not LOCAL_CONFIG_FILE_PATH.exists():
     shutil.copy(CONFIG_FILE_PATH, LOCAL_CONFIG_FILE_PATH)
 
@@ -181,17 +193,6 @@ class Config(BaseSettings):
         "models": [{"lang_code": "en", "model_name": "en_core_web_trf"}],
     }
     SCRUB_PRESIDIO_IGNORE_ENTITIES: list[str] = []
-    SCRUB_KEYS_HTML: list[str] = [
-        "text",
-        "canonical_text",
-        "title",
-        "state",
-        "task_description",
-        "key_char",
-        "canonical_key_char",
-        "key_vk",
-        "children",
-    ]
 
     # Visualization configurations
     VISUALIZE_DARK_MODE: bool = False
