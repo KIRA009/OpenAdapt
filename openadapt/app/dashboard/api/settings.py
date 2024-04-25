@@ -2,7 +2,7 @@
 
 from typing import Any, Literal, Union
 
-from fastapi import FastAPI
+from fastapi import APIRouter
 
 from openadapt.config import Config, config, persist_config
 
@@ -10,14 +10,15 @@ from openadapt.config import Config, config, persist_config
 class SettingsAPI:
     """API endpoints for settings."""
 
-    def __init__(self, app: FastAPI) -> None:
+    def __init__(self) -> None:
         """Initialize the SettingsAPI class."""
-        self.app = app
+        self.app = APIRouter()
 
-    def attach_routes(self) -> None:
+    def attach_routes(self) -> APIRouter:
         """Attach routes to the FastAPI app."""
-        self.app.add_api_route("/settings", self.get_settings, methods=["GET"])
-        self.app.add_api_route("/settings", self.set_settings, methods=["POST"])
+        self.app.add_api_route("", self.get_settings, methods=["GET"])
+        self.app.add_api_route("", self.set_settings, methods=["POST"])
+        return self.app
 
     Category = Union[Literal["api_keys", "scrubbing", "record_and_replay"]]
 

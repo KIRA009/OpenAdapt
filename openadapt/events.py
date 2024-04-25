@@ -709,7 +709,9 @@ def merge_consecutive_action_events(
 ) -> list[models.ActionEvent]:
     """Merge consecutive action events into one or more parent events."""
     num_events_before = len(events)
-    state = {"dt": 0}
+    state = {
+        "dt": 0
+    }  # dt is the time difference between the original event and the merged event
     rval = []
     to_merge = []
 

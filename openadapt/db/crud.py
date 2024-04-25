@@ -9,7 +9,7 @@ from loguru import logger
 import sqlalchemy as sa
 
 from openadapt.config import config
-from openadapt.db.db import BaseModel, Session
+from openadapt.db.db import Session
 from openadapt.models import (
     ActionEvent,
     MemoryStat,
@@ -17,7 +17,10 @@ from openadapt.models import (
     Recording,
     Screenshot,
     WindowEvent,
+    copy_sa_instance,
 )
+from openadapt.privacy.providers.presidio import PresidioScrubbingProvider
+from openadapt.utils import rows2dicts
 
 BATCH_SIZE = 1
 
@@ -470,3 +473,88 @@ def post_process_events(recording):
         )
 
     db.commit()
+
+
+def copy_recording(recording: Recording) -> Recording:
+    """Copy a recording.
+
+    Args:
+        recording (Recording): The recording to copy.
+
+    Returns:
+        Recording: The copied recording.
+    """
+    try:
+        new_recording = copy_sa_instance(recording, original_recording_id=recording.id)
+        db.add(new_recording)
+        db.commit()
+        db.refresh(new_recording)
+
+        old_to_new_screenshot_id_map = {}
+        old_to_new_window_event_id_map = {}
+
+        for screenshot in recording.screenshots:
+            new_screenshot = copy_sa_instance(screenshot, recording_id=new_recording.id)
+            db.add(new_screenshot)
+            db.commit()
+            db.refresh(new_screenshot)
+            old_to_new_screenshot_id_map[screenshot.id] = new_screenshot.id
+
+        for window_event in recording.window_events:
+            new_window_event = copy_sa_instance(
+                window_event, recording_id=new_recording.id
+            )
+            db.add(new_window_event)
+            db.commit()
+            db.refresh(new_window_event)
+            old_to_new_window_event_id_map[window_event.id] = new_window_event.id
+
+        for action_event in recording.action_events:
+            new_action_event = copy_sa_instance(
+                action_event,
+                recording_id=new_recording.id,
+                screenshot_id=old_to_new_screenshot_id_map.get(
+                    action_event.screenshot_id
+                ),
+                window_event_id=old_to_new_window_event_id_map.get(
+                    action_event.window_event_id
+                ),
+            )
+            db.add(new_action_event)
+            db.commit()
+            return new_recording
+    except Exception as e:
+        logger.error(f"Error copying recording: {e}")
+        db.rollback()
+        return None
+
+
+def scrub_recording(recording_id: int) -> None:
+    """Scrub a recording.
+
+    Args:
+        recording_id (int): The recording id to scrub.
+    """
+
+    from openadapt.events import get_events
+
+    if not config.SCRUB_ENABLED:
+        logger.error("Scrubbing is not enabled.")
+        return
+    recording = get_recording_by_id(2)
+    if recording is None:
+        logger.error(f"Recording with id {recording_id} not found.")
+        return
+
+    # new_recording = copy_recording(recording)
+    # if new_recording is None:
+    #     logger.error(f"Error copying recording with id {recording_id}.")
+    #     return
+    new_recording = recording
+
+    scrubber = PresidioScrubbingProvider()
+    new_recording.task_description = scrubber.scrub_text(new_recording.task_description)
+    action_events = get_events(recording)
+    event_dicts = rows2dicts(action_events)
+    event_dicts = scrubber.scrub_list_dicts(event_dicts)
+    print(event_dicts[0])

@@ -4,7 +4,7 @@
 from pathlib import Path
 import os
 
-from fastapi import FastAPI
+from fastapi import APIRouter, FastAPI
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from loguru import logger
@@ -17,12 +17,15 @@ from openadapt.config import config
 
 app = FastAPI()
 
-api = FastAPI()
+api = APIRouter()
 
-RecordingsAPI(api).attach_routes()
-SettingsAPI(api).attach_routes()
+recordings_app = RecordingsAPI().attach_routes()
+settings_app = SettingsAPI().attach_routes()
 
-app.mount("/api", api)
+api.include_router(recordings_app, prefix="/recordings")
+api.include_router(settings_app, prefix="/settings")
+
+app.include_router(api, prefix="/api")
 
 
 def run_app() -> None:
