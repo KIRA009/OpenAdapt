@@ -1,6 +1,6 @@
-poetry install
+# poetry install
 VERSION="v$(poetry run python -m build_scripts.get_version)"
-echo "Building release artifacts for version $VERSION"
+echo "Building release artifacts for version: $VERSION"
 # mv dist/OpenAdapt.zip dist/OpenAdapt-$VERSION.zip
 # mv dist/OpenAdapt.app.zip dist/OpenAdapt-$VERSION.app.zip
 # echo "Uploading release artifacts for version $VERSION"
